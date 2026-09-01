@@ -58,19 +58,6 @@ void addLine(int line, vector<string> stations, vector<int> times)
     }
 }
 
-bool stationExists(string station)
-{
-    for (int i = 0; i < nodes.size(); i++)
-    {
-        if (nodes[i].station == station)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void makeSubway()
 {
     addLine(
@@ -155,6 +142,19 @@ void makeSubway()
             110, 90, 90, 90, 100, 90
         }
     );
+}
+
+bool stationExists(string station)
+{
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (nodes[i].station == station)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int main()
