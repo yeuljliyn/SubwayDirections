@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <queue>
 
 using namespace std;
 
@@ -15,6 +16,17 @@ struct Edge
 {
     int to;
     int time;
+};
+
+struct Path
+{
+    int node;
+    int time;
+
+    bool operator<(const Path& other) const
+    {
+        return time > other.time;
+    }
 };
 
 vector<Node> nodes;
@@ -157,6 +169,64 @@ void makeSubway()
     );
 }
 
+void findShortestPath(string startStation, string endStation)
+{
+    const int INF = 1000000000;
+
+    vector<int> distance(nodes.size(), INF);
+
+    int startNode = -1;
+    int endNode = -1;
+
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (nodes[i].station == startStation)
+        {
+            startNode = i;
+        }
+
+        if (nodes[i].station == endStation)
+        {
+            endNode = i;
+        }
+    }
+
+    priority_queue<Path> pq;
+
+    distance[startNode] = 0;
+    pq.push({ startNode, 0 });
+
+    while (!pq.empty())
+    {
+        Path currentPath = pq.top();
+        pq.pop();
+
+        int current = currentPath.node;
+        int currentTime = currentPath.time;
+
+        if (distance[current] < currentTime)
+        {
+            continue;
+        }
+
+        for (int i = 0; i < graph[current].size(); i++)
+        {
+            int next = graph[current][i].to;
+            int nextTime = graph[current][i].time;
+
+            int newTime = currentTime + nextTime;
+
+            if (newTime < distance[next])
+            {
+                distance[next] = newTime;
+                pq.push({ next, newTime });
+            }
+        }
+    }
+
+    cout << distance[endNode] << "\n";
+}
+
 int main()
 {
     makeSubway();
@@ -192,6 +262,8 @@ int main()
 
         break;
     }
+
+    findShortestPath(startStation, endStation);
 
     return 0;
 }
