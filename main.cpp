@@ -24,7 +24,7 @@ int findNode(string station, int line)
 {
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == station && nodes[i].line == line)
+        if (nodes[i].station == station)
         {
             return i;
         }
