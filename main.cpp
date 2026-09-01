@@ -36,7 +36,8 @@ int findNode(string station, int line)
 {
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == station)
+        if (nodes[i].station == station &&
+            nodes[i].line == line)
         {
             return i;
         }
@@ -67,6 +68,22 @@ void addLine(int line, vector<string> stations, vector<int> times)
             line,
             times[i]
         );
+    }
+}
+
+void addTransferEdges()
+{
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        for (int j = i + 1; j < nodes.size(); j++)
+        {
+            if (nodes[i].station == nodes[j].station &&
+                nodes[i].line != nodes[j].line)
+            {
+                graph[i].push_back({ j, 180 });
+                graph[j].push_back({ i, 180 });
+            }
+        }
     }
 }
 
@@ -167,6 +184,8 @@ void makeSubway()
             110, 90, 90, 90, 100, 90
         }
     );
+
+    addTransferEdges();
 }
 
 void findShortestPath(string startStation, string endStation)
@@ -176,26 +195,16 @@ void findShortestPath(string startStation, string endStation)
     vector<int> distance(nodes.size(), INF);
     vector<int> previous(nodes.size(), -1);
 
-    int startNode = -1;
-    int endNode = -1;
+    priority_queue<Path> pq;
 
     for (int i = 0; i < nodes.size(); i++)
     {
         if (nodes[i].station == startStation)
         {
-            startNode = i;
-        }
-
-        if (nodes[i].station == endStation)
-        {
-            endNode = i;
+            distance[i] = 0;
+            pq.push({ i, 0 });
         }
     }
-
-    priority_queue<Path> pq;
-
-    distance[startNode] = 0;
-    pq.push({ startNode, 0 });
 
     while (!pq.empty())
     {
@@ -227,7 +236,20 @@ void findShortestPath(string startStation, string endStation)
         }
     }
 
-    if (distance[endNode] == INF)
+    int endNode = -1;
+    int minTime = INF;
+
+    for (int i = 0; i < nodes.size(); i++)
+    {
+        if (nodes[i].station == endStation &&
+            distance[i] < minTime)
+        {
+            minTime = distance[i];
+            endNode = i;
+        }
+    }
+
+    if (endNode == -1 || minTime == INF)
     {
         cout << "경로를 찾을 수 없습니다.\n";
         return;
@@ -252,7 +274,28 @@ void findShortestPath(string startStation, string endStation)
 
     for (int i = 0; i < path.size(); i++)
     {
+        bool isTransfer = false;
+
+        if (i < path.size() - 1 &&
+            nodes[path[i]].station == nodes[path[i + 1]].station &&
+            nodes[path[i]].line != nodes[path[i + 1]].line)
+        {
+            isTransfer = true;
+        }
+
+        if (i > 0 &&
+            nodes[path[i]].station == nodes[path[i - 1]].station &&
+            nodes[path[i]].line != nodes[path[i - 1]].line)
+        {
+            continue;
+        }
+
         cout << nodes[path[i]].station;
+
+        if (isTransfer)
+        {
+            cout << "(환승)";
+        }
 
         if (i < path.size() - 1)
         {
@@ -262,8 +305,8 @@ void findShortestPath(string startStation, string endStation)
 
     cout << "\n";
 
-    int minutes = distance[endNode] / 60;
-    int seconds = distance[endNode] % 60;
+    int minutes = minTime / 60;
+    int seconds = minTime % 60;
 
     cout << "총 소요 시간: "
         << minutes << "분 "
