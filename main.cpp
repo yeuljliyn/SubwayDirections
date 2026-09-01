@@ -174,6 +174,7 @@ void findShortestPath(string startStation, string endStation)
     const int INF = 1000000000;
 
     vector<int> distance(nodes.size(), INF);
+    vector<int> previous(nodes.size(), -1);
 
     int startNode = -1;
     int endNode = -1;
@@ -219,12 +220,54 @@ void findShortestPath(string startStation, string endStation)
             if (newTime < distance[next])
             {
                 distance[next] = newTime;
+                previous[next] = current;
+
                 pq.push({ next, newTime });
             }
         }
     }
 
-    cout << distance[endNode] << "\n";
+    if (distance[endNode] == INF)
+    {
+        cout << "경로를 찾을 수 없습니다.\n";
+        return;
+    }
+
+    vector<int> path;
+
+    int current = endNode;
+
+    while (current != -1)
+    {
+        path.push_back(current);
+        current = previous[current];
+    }
+
+    reverse(path.begin(), path.end());
+
+    cout << "\n[탐색 결과]\n";
+    cout << startStation << " -> " << endStation << "\n";
+
+    cout << "이동경로: ";
+
+    for (int i = 0; i < path.size(); i++)
+    {
+        cout << nodes[path[i]].station;
+
+        if (i < path.size() - 1)
+        {
+            cout << " -> ";
+        }
+    }
+
+    cout << "\n";
+
+    int minutes = distance[endNode] / 60;
+    int seconds = distance[endNode] % 60;
+
+    cout << "총 소요 시간: "
+        << minutes << "분 "
+        << seconds << "초\n";
 }
 
 int main()
