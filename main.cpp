@@ -60,5 +60,10 @@ void addLine(int line, vector<string> stations, vector<int> times)
 
 int main()
 {
+    addEdge("용산", "남영", 1, 110);
+
+    cout << nodes.size() << "\n";
+    cout << graph[0][0].time << "\n";
+
     return 0;
 }
