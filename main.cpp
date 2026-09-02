@@ -4,40 +4,38 @@
 #include <algorithm>
 #include <queue>
 
-using namespace std;
-
 struct Node
 {
-    string station;
-    int line;
+    std::string Station;
+    int Line;
 };
 
 struct Edge
 {
-    int to;
-    int time;
+    int To;
+    int Time;
 };
 
 struct Path
 {
-    int node;
-    int time;
+    int NodeIndex;
+    int Time;
 
     bool operator<(const Path& other) const
     {
-        return time > other.time;
+        return Time > other.Time;
     }
 };
 
-vector<Node> nodes;
-vector<vector<Edge>> graph;
+std::vector<Node> nodes;
+std::vector<std::vector<Edge>> graph;
 
-int findNode(string station, int line)
+int findNode(const std::string& station, int line)
 {
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == station &&
-            nodes[i].line == line)
+        if (nodes[i].Station == station &&
+            nodes[i].Line == line)
         {
             return i;
         }
@@ -49,16 +47,23 @@ int findNode(string station, int line)
     return nodes.size() - 1;
 }
 
-void addEdge(string a, string b, int line, int time)
+void addEdge(
+    const std::string& firstStation,
+    const std::string& secondStation,
+    int line,
+    int time)
 {
-    int aIndex = findNode(a, line);
-    int bIndex = findNode(b, line);
+    int firstIndex = findNode(firstStation, line);
+    int secondIndex = findNode(secondStation, line);
 
-    graph[aIndex].push_back({ bIndex, time });
-    graph[bIndex].push_back({ aIndex, time });
+    graph[firstIndex].push_back({ secondIndex, time });
+    graph[secondIndex].push_back({ firstIndex, time });
 }
 
-void addLine(int line, vector<string> stations, vector<int> times)
+void addLine(
+    int line,
+    const std::vector<std::string>& stations,
+    const std::vector<int>& times)
 {
     for (int i = 0; i < times.size(); i++)
     {
@@ -71,27 +76,42 @@ void addLine(int line, vector<string> stations, vector<int> times)
     }
 }
 
+void addTransferEdge(int firstIndex, int secondIndex)
+{
+    if (nodes[firstIndex].Station != nodes[secondIndex].Station)
+    {
+        return;
+    }
+
+    if (nodes[firstIndex].Line == nodes[secondIndex].Line)
+    {
+        return;
+    }
+
+    const int TRANSFER_TIME = 180;
+
+    graph[firstIndex].push_back({ secondIndex, TRANSFER_TIME });
+    graph[secondIndex].push_back({ firstIndex, TRANSFER_TIME });
+}
+
 void addTransferEdges()
 {
-    for (int i = 0; i < nodes.size(); i++)
+    for (int firstIndex = 0; firstIndex < nodes.size(); firstIndex++)
     {
-        for (int j = i + 1; j < nodes.size(); j++)
+        for (int secondIndex = firstIndex + 1;
+            secondIndex < nodes.size();
+            secondIndex++)
         {
-            if (nodes[i].station == nodes[j].station &&
-                nodes[i].line != nodes[j].line)
-            {
-                graph[i].push_back({ j, 180 });
-                graph[j].push_back({ i, 180 });
-            }
+            addTransferEdge(firstIndex, secondIndex);
         }
     }
 }
 
-bool stationExists(string station)
+bool stationExists(const std::string& station)
 {
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == station)
+        if (nodes[i].Station == station)
         {
             return true;
         }
@@ -188,127 +208,135 @@ void makeSubway()
     addTransferEdges();
 }
 
-void findShortestPath(string startStation, string endStation)
+void findShortestPath(
+    const std::string& startStation,
+    const std::string& endStation)
 {
     const int INF = 1000000000;
 
-    vector<int> distance(nodes.size(), INF);
-    vector<int> previous(nodes.size(), -1);
+    std::vector<int> distance(nodes.size(), INF);
+    std::vector<int> previous(nodes.size(), -1);
 
-    priority_queue<Path> pq;
+    std::priority_queue<Path> pathQueue;
 
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == startStation)
+        if (nodes[i].Station == startStation)
         {
             distance[i] = 0;
-            pq.push({ i, 0 });
+            pathQueue.push({ i, 0 });
         }
     }
 
-    while (!pq.empty())
+    while (!pathQueue.empty())
     {
-        Path currentPath = pq.top();
-        pq.pop();
+        Path currentPath = pathQueue.top();
+        pathQueue.pop();
 
-        int current = currentPath.node;
-        int currentTime = currentPath.time;
+        int currentIndex = currentPath.NodeIndex;
+        int currentTime = currentPath.Time;
 
-        if (distance[current] < currentTime)
+        if (distance[currentIndex] < currentTime)
         {
             continue;
         }
 
-        for (int i = 0; i < graph[current].size(); i++)
+        for (int edgeIndex = 0;
+            edgeIndex < graph[currentIndex].size();
+            edgeIndex++)
         {
-            int next = graph[current][i].to;
-            int nextTime = graph[current][i].time;
+            int nextIndex = graph[currentIndex][edgeIndex].To;
+            int nextTime = graph[currentIndex][edgeIndex].Time;
 
             int newTime = currentTime + nextTime;
 
-            if (newTime < distance[next])
+            if (newTime < distance[nextIndex])
             {
-                distance[next] = newTime;
-                previous[next] = current;
+                distance[nextIndex] = newTime;
+                previous[nextIndex] = currentIndex;
 
-                pq.push({ next, newTime });
+                pathQueue.push({ nextIndex, newTime });
             }
         }
     }
 
-    int endNode = -1;
-    int minTime = INF;
+    int endNodeIndex = -1;
+    int minimumTime = INF;
 
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (nodes[i].station == endStation &&
-            distance[i] < minTime)
+        if (nodes[i].Station == endStation &&
+            distance[i] < minimumTime)
         {
-            minTime = distance[i];
-            endNode = i;
+            minimumTime = distance[i];
+            endNodeIndex = i;
         }
     }
 
-    if (endNode == -1 || minTime == INF)
+    if (endNodeIndex == -1 || minimumTime == INF)
     {
-        cout << "경로를 찾을 수 없습니다.\n";
+        std::cout << "경로를 찾을 수 없습니다.\n";
         return;
     }
 
-    vector<int> path;
+    std::vector<int> path;
 
-    int current = endNode;
+    int currentIndex = endNodeIndex;
 
-    while (current != -1)
+    while (currentIndex != -1)
     {
-        path.push_back(current);
-        current = previous[current];
+        path.push_back(currentIndex);
+        currentIndex = previous[currentIndex];
     }
 
-    reverse(path.begin(), path.end());
+    std::reverse(path.begin(), path.end());
 
-    cout << "\n[탐색 결과]\n";
-    cout << startStation << " -> " << endStation << "\n";
+    std::cout << "\n[탐색 결과]\n";
+    std::cout << startStation << " -> " << endStation << "\n";
 
-    cout << "이동경로: ";
+    std::cout << "이동경로: ";
 
     for (int i = 0; i < path.size(); i++)
     {
-        bool isTransfer = false;
+        int nodeIndex = path[i];
 
-        if (i < path.size() - 1 &&
-            nodes[path[i]].station == nodes[path[i + 1]].station &&
-            nodes[path[i]].line != nodes[path[i + 1]].line)
+        if (i > 0)
         {
-            isTransfer = true;
+            int previousNodeIndex = path[i - 1];
+
+            if (nodes[nodeIndex].Station ==
+                nodes[previousNodeIndex].Station &&
+                nodes[nodeIndex].Line !=
+                nodes[previousNodeIndex].Line)
+            {
+                continue;
+            }
         }
 
-        if (i > 0 &&
-            nodes[path[i]].station == nodes[path[i - 1]].station &&
-            nodes[path[i]].line != nodes[path[i - 1]].line)
-        {
-            continue;
-        }
-
-        cout << nodes[path[i]].station;
-
-        if (isTransfer)
-        {
-            cout << "(환승)";
-        }
+        std::cout << nodes[nodeIndex].Station;
 
         if (i < path.size() - 1)
         {
-            cout << " -> ";
+            int nextNodeIndex = path[i + 1];
+
+            if (nodes[nodeIndex].Station ==
+                nodes[nextNodeIndex].Station &&
+                nodes[nodeIndex].Line !=
+                nodes[nextNodeIndex].Line)
+            {
+                std::cout << "(환승)";
+            }
+
+            std::cout << " -> ";
         }
     }
 
-    cout << "\n";
+    int minutes = minimumTime / 60;
+    int seconds = minimumTime % 60;
 
-    int minutes = minTime / 60;
-    int seconds = minTime % 60;
-
-    cout << "총 소요 시간: "
+    std::cout << "\n";
+    std::cout
+        << "총 소요 시간: "
         << minutes << "분 "
         << seconds << "초\n";
 }
@@ -317,32 +345,35 @@ int main()
 {
     makeSubway();
 
-    string startStation;
-    string endStation;
+    std::string startStation;
+    std::string endStation;
 
     while (true)
     {
-        cout << "출발 역 : ";
-        cin >> startStation;
+        std::cout << "출발 역 : ";
+        std::cin >> startStation;
 
-        cout << "도착 역 : ";
-        cin >> endStation;
+        std::cout << "도착 역 : ";
+        std::cin >> endStation;
 
         if (!stationExists(startStation))
         {
-            cout << "존재하지 않는 출발역입니다. 다시 입력해주세요.\n\n";
+            std::cout
+                << "존재하지 않는 출발역입니다. 다시 입력해주세요.\n\n";
             continue;
         }
 
         if (!stationExists(endStation))
         {
-            cout << "존재하지 않는 도착역입니다. 다시 입력해주세요.\n\n";
+            std::cout
+                << "존재하지 않는 도착역입니다. 다시 입력해주세요.\n\n";
             continue;
         }
 
         if (startStation == endStation)
         {
-            cout << "출발역과 도착역은 같을 수 없습니다. 다시 입력해주세요.\n\n";
+            std::cout
+                << "출발역과 도착역은 같을 수 없습니다. 다시 입력해주세요.\n\n";
             continue;
         }
 
