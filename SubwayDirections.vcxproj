@@ -124,10 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PathFinder.cpp" />
     <ClCompile Include="SubwayCsvLoader.cpp" />
     <ClCompile Include="SubwayGraph.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="PathFinder.h" />
     <ClInclude Include="SubwayCsvLoader.h" />
     <ClInclude Include="SubwayGraph.h" />
     <ClInclude Include="SubwayTypes.h" />
